@@ -25,7 +25,8 @@ import matplotlib.pylab as plt
 
 from timeit import default_timer as timer
 
-#import torch_kdtree
+# Prior versions relied on ``torch_kdtree`` for nearest neighbour queries.
+# The implementation no longer depends on that package.
 
 torch.backends.cudnn.benchmark = True
 

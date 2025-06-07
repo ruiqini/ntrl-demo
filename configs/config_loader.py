@@ -93,7 +93,7 @@ def config_parser():
                              memory usage (higher values need more memory). Needs to be balanced with \
                              num_sample_points_training')
     parser.add_argument("--num_epochs", type=int, default=1500,
-                        help='Stopping citron for duration of training. Model converges much earlier: model convergence\
+                        help='Stopping criterion for duration of training. Model converges much earlier: model convergence\
                          can be checked via tensorboard and is logged within the experiment folder.')
     parser.add_argument("--lr", type=float, default=1e-6,
                         help='Learning rate used during training.')
