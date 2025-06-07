@@ -437,5 +437,19 @@ class Model():
 
         
     def load_pretrained_state_dict(self, state_dict):
-        own_state=self.state_dict
+        """Load a checkpoint dictionary into the current model."""
+
+        # B matrix used by the network
+        self.B = state_dict['B_state_dict'].to(self.Params['Device'])
+
+        # Recreate the network with the loaded B and copy parameters
+        self.network = model_network.NN(self.Params['Device'], self.dim, self.B)
+        self.network.load_state_dict(state_dict['model_state_dict'], strict=True)
+        self.network.to(torch.device(self.Params['Device']))
+        self.network.float()
+        self.network.eval()
+
+        # Recreate helper function object on the correct device
+        self.function = model_function.Function(
+            self.folder, self.Params['Device'], self.network, self.dim)
 
