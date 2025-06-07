@@ -37,16 +37,21 @@ def multiprocess(func):
 	p.close()
 	p.join()
 
-print('Start scaling.')
-multiprocess(to_off)
+def main():
+        print('Start scaling.')
+        multiprocess(to_off)
 
-print('Start speed sampling.')
-for path in paths:
-	print(path)
-	sample_speed(path, cfg.num_samples, cfg.num_dim)
+        print('Start speed sampling.')
+        for path in paths:
+                print(path)
+                sample_speed(path, cfg.num_samples, cfg.num_dim)
 
-print('Start voxelized pointcloud sampling.')
-voxelized_pointcloud_sampling.init(cfg)
-multiprocess(voxelized_pointcloud_sampling.voxelized_pointcloud_sampling)
+        print('Start voxelized pointcloud sampling.')
+        voxelized_pointcloud_sampling.init(cfg)
+        multiprocess(voxelized_pointcloud_sampling.voxelized_pointcloud_sampling)
+
+
+if __name__ == '__main__':
+        main()
 
 

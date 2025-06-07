@@ -1,5 +1,4 @@
-import os 
-import os 
+import os
 import glob
 import numpy as np
 from timeit import default_timer as timer
@@ -11,31 +10,38 @@ import pytorch_kinematics as pk
 
 import math
 import matplotlib.pyplot as plt
+from scipy.spatial import cKDTree
 
-import torch_kdtree #import build_kd_tree
+# The original implementation relied on ``torch_kdtree`` which required manual
+# compilation.  We first switched to ``torch.cdist`` for simplicity, but that
+# scales quadratically with the number of points.  We now use SciPy's
+# ``cKDTree`` for efficient nearest neighbour queries on the CPU.
 
 
 def point_obstacle_distance(query_points, kdtree, v_obs, normal_obs):
+    """Compute the distance from query points to the closest obstacle points.
 
+    ``cKDTree`` provides an efficient CPU-based nearest-neighbour search which
+    avoids the quadratic scaling of ``torch.cdist``.
+    """
 
-    dists, inds = kdtree.query(query_points, nr_nns_searches=1)
-    dists = dists.squeeze()
-    inds = inds.squeeze()
-    unsigned_distance = torch.sqrt(dists)
-    #print(closest_faces.shape)
-    #print(normal_obs)
-    #print(dists.shape)
-    #print(inds.shape)
-    normal_face = normal_obs[inds,:]
-    #print(closest_points.shape)
-    normal = query_points-v_obs[inds,:]
-    normal = torch.nn.functional.normalize(normal,dim=1)
+    # Move to CPU for querying the tree and convert back afterwards.
+    q_np = query_points.detach().cpu().numpy()
+    dists, inds = kdtree.query(q_np, k=1)
+
+    unsigned_distance = torch.tensor(dists, dtype=query_points.dtype,
+                                     device=query_points.device).squeeze()
+    inds = torch.tensor(inds, dtype=torch.long, device=query_points.device).squeeze()
+
+    normal_face = normal_obs[inds, :]
+    normal = query_points - v_obs[inds, :]
+    normal = torch.nn.functional.normalize(normal, dim=1)
 
     dot = torch.einsum('ij,ij->i', normal, normal_face)
-    return unsigned_distance, dot, normal 
+    return unsigned_distance, dot, normal
 
-def point_append_list(X_list,Y_list, N_list,
-                      kdtree,  v_obs, normal_obs,
+def point_append_list(X_list, Y_list, N_list,
+                      kdtree, v_obs, normal_obs,
                       bb_max,bb_min,
                         numsamples, dim, offset, margin):
     
@@ -181,17 +187,17 @@ def point_rand_sample_bound_points(numsamples, dim,
     bb_min = torch.tensor(bb_min, dtype=torch.float32, device='cuda')[0]
     #print(bb_max)
     
+    kdtree = cKDTree(v_obs)
     v_obs = torch.tensor(v_obs, dtype=torch.float32, device='cuda')
     n_obs = torch.tensor(n_obs, dtype=torch.float32, device='cuda')
-
-    kdtree = torch_kdtree.build_kd_tree(v_obs)
 
     
     X_list = []
     Y_list = []
     N_list = []
     
-    X_list, Y_list, N_list = point_append_list(X_list, Y_list, N_list, kdtree, v_obs, n_obs,
+    X_list, Y_list, N_list = point_append_list(X_list, Y_list, N_list,
+                                kdtree, v_obs, n_obs,
                                 bb_max, bb_min, numsamples, dim, offset, margin)
    
     X = torch.cat(X_list,0)[:numsamples]

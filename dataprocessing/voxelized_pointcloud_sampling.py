@@ -2,12 +2,12 @@ from scipy.spatial import cKDTree as KDTree
 import numpy as np
 import os
 import traceback
-import igl
 #import open3d as o3d
 
 kdtree, grid_points, cfg = None, None, None
 def voxelized_pointcloud_sampling(path):
     try:
+        import igl
 
         out_path = os.path.dirname(path)
         file_name = os.path.splitext(os.path.basename(path))[0]
@@ -71,8 +71,8 @@ def init(cfg_param):
     grid_points = create_grid_points_from_bounds(cfg.bb_min, cfg.bb_max, cfg.input_res)
     kdtree = KDTree(grid_points)
 
-def create_grid_points_from_bounds(minimun, maximum, res):
-    x = np.linspace(minimun, maximum, res)
+def create_grid_points_from_bounds(minimum, maximum, res):
+    x = np.linspace(minimum, maximum, res)
     X, Y, Z = np.meshgrid(x, x, x, indexing='ij')
     X = X.reshape((np.prod(X.shape),))
     Y = Y.reshape((np.prod(Y.shape),))
