@@ -1,26 +1,36 @@
 import sys
 sys.path.append('.')
-from models.metric import model_train_metric as md#_newout_sqrtlog _newout_log2
-#from models import model_train as md
-from os import path
-
-modelPath = './Experiments/Maze'
-
-dataPath = './datasets/test/maze'
+import argparse
+from models.metric import model_train_metric as md  # _newout_sqrtlog _newout_log2
 
 
-# #model    = md.Model(modelPath, dataPath, 2,[-0.0,-0.0], device='cuda:0')
+def main(args=None):
+    parser = argparse.ArgumentParser(description="Train the Maze model")
+    parser.add_argument(
+        "--data",
+        default="./datasets/test/maze",
+        help="Path to the dataset directory",
+    )
+    parser.add_argument(
+        "--output",
+        default="./Experiments/Maze",
+        help="Directory where the model checkpoints will be saved",
+    )
 
-#model    = md.Model(modelPath, dataPath, 2,[-0.45,-0.45], device='cuda:0')
-# #model    = md.Model(modelPath, dataPath, 2,[0.03,-0.45], device='cuda:0')
+    opts = parser.parse_args(args)
 
-#dataPath = './datasets/test/maze5'
+    model = md.Model(
+        opts.output,
+        opts.data,
+        2,
+        [-0.0, -0.0],
+        device="cuda:0",
+    )
 
-model    = md.Model(modelPath, dataPath, 2,[-0.0,-0.0], device='cuda:0')
+    model.train()
 
-#model    = md.Model(modelPath, dataPath, 2,[-0.0,-0.0], device='cuda:0')
-#model    = md.Model(modelPath, dataPath, 2,[0.03,-0.45], device='cuda:0')
 
-model.train()
+if __name__ == "__main__":
+    main()
 
 

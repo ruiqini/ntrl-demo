@@ -1,18 +1,36 @@
 import sys
 sys.path.append('.')
+import argparse
 from models.metric import model_train_metric as md
-from os import path
-from glob import glob
-
-modelPath = './Experiments/Gib'
-#dataPath = './datasets/gibson/Auburn'
-dataPath = './datasets/gibson/Spotswood'
 
 
+def main(args=None):
+    parser = argparse.ArgumentParser(description="Train the Gibson model")
+    parser.add_argument(
+        "--data",
+        default="./datasets/gibson/Spotswood",
+        help="Path to the dataset directory",
+    )
+    parser.add_argument(
+        "--output",
+        default="./Experiments/Gib",
+        help="Directory where the model checkpoints will be saved",
+    )
 
-#model    = md.Model(modelPath, dataPath, 3, [0, 0.3,-0.03],device='cuda:0')
-model    = md.Model(modelPath, dataPath, 3, [-0.15, 0.1,0.1],device='cuda:0')
+    opts = parser.parse_args(args)
 
-model.train()
+    model = md.Model(
+        opts.output,
+        opts.data,
+        3,
+        [-0.15, 0.1, 0.1],
+        device="cuda:0",
+    )
+
+    model.train()
+
+
+if __name__ == "__main__":
+    main()
 
 

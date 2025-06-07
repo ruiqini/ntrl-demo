@@ -7,4 +7,5 @@ This is a minimal example.
 3. run `docker run -u $(id -u):$(id -g) --env="DISPLAY" --volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" --volume="/home/n/Eikonal_Planning/ntrl-demo:/workspace" --volume="/usr/lib/x86_64-linux-gnu/:/glu" --volume="/home/n/.local:/.local" --env="QT_X11_NO_MITSHM=1"  --gpus all -ti --rm ntrl:demo` to start the docker container.
 4. Find `torch_kdtree` and install
 5. run `python dataprocessing/preprocess.py --config configs/gibson.txt ` to sample training data
-6. run `python train/train_gib.py` to start the training. 
+6. run `python train/train_gib.py --data <dataset_dir> --output <experiment_dir>` to train on the Gibson dataset.
+7. run `python train/train_maze.py --data <dataset_dir> --output <experiment_dir>` to train on the Maze dataset.
