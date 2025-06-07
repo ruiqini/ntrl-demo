@@ -6,7 +6,10 @@ from dataprocessing.convert_to_scaled_off import to_off
 #from dataprocessing.speed_sampling_gpu_kdtree_normal import sample_speed
 #from dataprocessing.speed_sampling_gpu_bvh_dual import sample_speed
 from dataprocessing.speed_sampling_gpu_kdtree_normal import sample_speed
-import dataprocessing.voxelized_pointcloud_sampling as voxelized_pointcloud_sampling
+from dataprocessing.voxelized_pointcloud_sampling import (
+    SamplerConfig,
+    VoxelizedPointcloudSampler,
+)
 from glob import glob
 import configs.config_loader as cfg_loader
 import multiprocessing as mp
@@ -27,31 +30,34 @@ paths = chunks[cfg.current_chunk]
 
 
 if cfg.num_cpus == -1:
-	num_cpus = mp.cpu_count()
+    num_cpus = mp.cpu_count()
 else:
-	num_cpus = cfg.num_cpus
+    num_cpus = cfg.num_cpus
 
 def multiprocess(func):
-	p = Pool(num_cpus)
-	p.map(func, paths)
-	p.close()
-	p.join()
+    p = Pool(num_cpus)
+    p.map(func, paths)
+    p.close()
+    p.join()
 
 def main():
-        print('Start scaling.')
-        multiprocess(to_off)
+    print('Start scaling.')
+    multiprocess(to_off)
 
-        print('Start speed sampling.')
-        for path in paths:
-                print(path)
-                sample_speed(path, cfg.num_samples, cfg.num_dim)
+    print('Start speed sampling.')
+    for path in paths:
+        print(path)
+        sample_speed(path, cfg.num_samples, cfg.num_dim)
 
-        print('Start voxelized pointcloud sampling.')
-        voxelized_pointcloud_sampling.init(cfg)
-        multiprocess(voxelized_pointcloud_sampling.voxelized_pointcloud_sampling)
+    print('Start voxelized pointcloud sampling.')
+    sampler = VoxelizedPointcloudSampler(
+        SamplerConfig(cfg.bb_min, cfg.bb_max, cfg.input_res, cfg.num_points)
+    )
+    for path in paths:
+        sampler.sample(path)
 
 
 if __name__ == '__main__':
-        main()
+    main()
 
 

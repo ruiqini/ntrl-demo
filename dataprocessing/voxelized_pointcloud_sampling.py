@@ -1,83 +1,55 @@
-from scipy.spatial import cKDTree as KDTree
-import numpy as np
+"""Voxelized point cloud sampling utilities."""
+
+from __future__ import annotations
+
 import os
 import traceback
-#import open3d as o3d
+from dataclasses import dataclass
 
-kdtree, grid_points, cfg = None, None, None
-def voxelized_pointcloud_sampling(path):
-    try:
-        import igl
+import numpy as np
 
-        out_path = os.path.dirname(path)
-        file_name = os.path.splitext(os.path.basename(path))[0]
-        input_file = os.path.join(out_path,file_name + '_scaled.off')
-        out_file = out_path + '/voxelized_point_cloud_{}res_{}points.npz'.format(cfg.input_res, cfg.num_points)
+from utils.kdtree_utils import build_tree
 
 
-        if os.path.exists(out_file):
-            print(f'Exists: {out_file}')
-            return
+@dataclass
+class SamplerConfig:
+    bb_min: float
+    bb_max: float
+    input_res: int
+    num_points: int
 
 
-
-        #mesh = trimesh.load(input_file)
-        #point_cloud = mesh.sample(cfg.num_points)
-        #'''
-        if False:
-            v, f = igl.read_triangle_mesh(input_file)
-            B, FI,_ = igl.random_points_on_mesh(cfg.num_points,v,f)
-            
-            n = igl.per_vertex_normals(v, f, igl.PER_VERTEX_NORMALS_WEIGHTING_TYPE_AREA)
-            #n = igl.per_face_normals(v, f, z)
-
-            face_verts = v[f[FI], :]
-            v_obs = np.sum(B[...,np.newaxis] * face_verts, axis=1)
-            #v_obs = bary * v[f[FI,:]]
-
-            face_norms = n[f[FI], :]
-            #n_obs = n[FI,:]
-            n_obs = np.sum(B[...,np.newaxis] * face_norms, axis=1)
-            
-            pcf=np.array([[0,0,0]])
-            igl.write_obj(out_path + '/pc.obj', v_obs, pcf)
-            np.save(out_path + '/pc_normal.npy',n_obs)
-        ''''''
-        #print(point_cloud)
-        #occupancies = np.zeros(len(grid_points), dtype=np.int8)
-        '''
-        print(grid_points.shape)
-
-        v, f = igl.read_triangle_mesh(input_file)
-
-        S, I, C = igl.signed_distance(grid_points, v, f)
-        print(S.shape)
-        '''
-
-        #_, idx = kdtree.query(point_cloud)
-        #occupancies[idx] = 1
-
-        #compressed_occupancies = np.packbits(occupancies)
-
-        #np.savez(out_file, point_cloud=point_cloud, compressed_occupancies = compressed_occupancies, bb_min = cfg.bb_min, bb_max = cfg.bb_max, res = cfg.input_res)
-        print('Finished: {}'.format(path))
-
-    except Exception as err:
-        print('Error with {}: {}'.format(path, traceback.format_exc()))
-
-def init(cfg_param):
-    global kdtree, grid_points, cfg
-    cfg = cfg_param
-    grid_points = create_grid_points_from_bounds(cfg.bb_min, cfg.bb_max, cfg.input_res)
-    kdtree = KDTree(grid_points)
-
-def create_grid_points_from_bounds(minimum, maximum, res):
+def create_grid_points_from_bounds(minimum: float, maximum: float, res: int) -> np.ndarray:
     x = np.linspace(minimum, maximum, res)
-    X, Y, Z = np.meshgrid(x, x, x, indexing='ij')
-    X = X.reshape((np.prod(X.shape),))
-    Y = Y.reshape((np.prod(Y.shape),))
-    Z = Z.reshape((np.prod(Z.shape),))
-
-    points_list = np.column_stack((X, Y, Z))
-    del X, Y, Z, x
+    X, Y, Z = np.meshgrid(x, x, x, indexing="ij")
+    points_list = np.column_stack((X.ravel(), Y.ravel(), Z.ravel()))
     return points_list
+
+
+class VoxelizedPointcloudSampler:
+    def __init__(self, cfg: SamplerConfig) -> None:
+        self.cfg = cfg
+        self.grid_points = create_grid_points_from_bounds(cfg.bb_min, cfg.bb_max, cfg.input_res)
+        self.kdtree = build_tree(self.grid_points)
+
+    def sample(self, path: str) -> None:
+        """Sample a voxelized point cloud for the given mesh path."""
+        try:
+            import igl  # Deferred import since this is optional
+
+            out_path = os.path.dirname(path)
+            file_name = os.path.splitext(os.path.basename(path))[0]
+            input_file = os.path.join(out_path, file_name + "_scaled.off")
+            out_file = os.path.join(
+                out_path,
+                f"voxelized_point_cloud_{self.cfg.input_res}res_{self.cfg.num_points}points.npz",
+            )
+
+            if os.path.exists(out_file):
+                print(f"Exists: {out_file}")
+                return
+
+            # Placeholder for actual sampling logic
+            print(f"Finished: {path}")
+        except Exception:
+            print(f"Error with {path}: {traceback.format_exc()}")

@@ -10,7 +10,8 @@ import pytorch_kinematics as pk
 
 import math
 import matplotlib.pyplot as plt
-from scipy.spatial import cKDTree
+
+from utils.kdtree_utils import build_tree, query_tree
 
 # The original implementation relied on ``torch_kdtree`` which required manual
 # compilation.  We first switched to ``torch.cdist`` for simplicity, but that
@@ -27,7 +28,7 @@ def point_obstacle_distance(query_points, kdtree, v_obs, normal_obs):
 
     # Move to CPU for querying the tree and convert back afterwards.
     q_np = query_points.detach().cpu().numpy()
-    dists, inds = kdtree.query(q_np, k=1)
+    dists, inds = query_tree(kdtree, q_np, k=1)
 
     unsigned_distance = torch.tensor(dists, dtype=query_points.dtype,
                                      device=query_points.device).squeeze()
@@ -187,7 +188,7 @@ def point_rand_sample_bound_points(numsamples, dim,
     bb_min = torch.tensor(bb_min, dtype=torch.float32, device='cuda')[0]
     #print(bb_max)
     
-    kdtree = cKDTree(v_obs)
+    kdtree = build_tree(v_obs)
     v_obs = torch.tensor(v_obs, dtype=torch.float32, device='cuda')
     n_obs = torch.tensor(n_obs, dtype=torch.float32, device='cuda')
 
